@@ -1,0 +1,108 @@
+.result-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 1rem;
+}
+
+.result-card {
+  width: 100%;
+  max-width: 500px;
+  background: white;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.result-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+}
+
+.result-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.result-header.success .result-icon {
+  color: #2e7d32;
+}
+
+.result-header.error .result-icon {
+  color: #d32f2f;
+}
+
+.result-header.processing .result-icon {
+  color: #ed6c02;
+}
+
+.result-header h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.result-header.success h1 {
+  color: #2e7d32;
+}
+
+.result-header.error h1 {
+  color: #d32f2f;
+}
+
+.result-header.processing h1 {
+  color: #ed6c02;
+}
+
+.result-header p {
+  color: #666;
+}
+
+.result-details {
+  margin-bottom: 2rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row .label {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.detail-row .value {
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+.detail-row .value.amount {
+  font-size: 1.1rem;
+  color: #1976d2;
+}
+
+.result-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.result-actions .btn {
+  flex: 1;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .result-actions {
+    flex-direction: column;
+  }
+}
