@@ -2,6 +2,7 @@ using DirectPayGateway.Core.Entities;
 using DirectPayGateway.Core.Interfaces;
 using DirectPayGateway.Core.Services;
 using DirectPayGateway.Infrastructure.Data;
+using DirectPayGateway.Infrastructure.Data.Seeding;
 using DirectPayGateway.Infrastructure.ExternalServices;
 using DirectPayGateway.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
@@ -41,6 +42,7 @@ public static class DependencyInjection
         services.Configure<DirectPaySettings>(
             configuration.GetSection("DirectPay"));
 
+        // Existing repositories and services
         services.AddScoped<IPaymentRepository, PaymentRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ITokenService, TokenService>();
@@ -49,6 +51,13 @@ public static class DependencyInjection
 
         services.AddScoped<PaymentService>();
         services.AddScoped<AuthService>();
+
+        // CTM Integration repositories and services
+        services.AddScoped<ICampaignRepository, CampaignRepository>();
+        services.AddScoped<IDonationRepository, DonationRepository>();
+        services.AddScoped<ICtmAuditLogRepository, CtmAuditLogRepository>();
+        services.AddScoped<ICtmBillerService, CtmBillerService>();
+        services.AddScoped<CampaignSeeder>();
 
         return services;
     }

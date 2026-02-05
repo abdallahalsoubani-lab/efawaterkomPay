@@ -1,0 +1,49 @@
+{
+  "globalSettings": {
+    "billerCode": "YOUR_BILLER_CODE",
+    "sdrCode": "YOUR_SDR_CODE",
+    "defaultIBAN": "JO94CBJO0010000000000131000302",
+    "defaultBankCode": "10",
+    "currency": "JOD",
+    "defaultServiceType": "Donations",
+    "basicAuth": {
+      "username": "YOUR_CTM_USERNAME",
+      "password": "YOUR_CTM_PASSWORD"
+    }
+  },
+  "campaigns": [
+    {
+      "campaignCode": "CAMP001",
+      "billNo": "BILL001",
+      "nameAr": "حملة إفطار صائم",
+      "nameEn": "Iftar Fasting Campaign",
+      "descriptionAr": "حملة لتوفير وجبات إفطار للصائمين خلال شهر رمضان المبارك",
+      "descriptionEn": "Campaign to provide iftar meals during Ramadan",
+      "category": "Food",
+      "serviceType": "Donations",
+      "status": "Active",
+      "billType": "Recurring",
+      "billCustomerCat": "Citizen",
+      "targetAmount": 500000.000,
+      "collectedAmount": 0.000,
+      "donorsCount": 0,
+      "startDate": "2026-01-01T00:00:00",
+      "endDate": "2026-12-31T23:59:59",
+      "paymentConstraints": {
+        "allowPartialPayment": true,
+        "minAmount": 1.000,
+        "maxAmount": 100000.000
+      },
+      "bankAccount": {
+        "iban": "JO94CBJO0010000000000131000302",
+        "bankCode": "10"
+      },
+      "additionalInfo": {
+        "custName": "جمعية الخير للتنمية الاجتماعية",
+        "freeText": "حملة إفطار صائم - رمضان 2026",
+        "email": "info@alkhair.org.jo",
+        "phone": "+962791234567"
+      }
+    }
+  ]
+}

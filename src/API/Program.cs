@@ -5,6 +5,8 @@ using DirectPayGateway.Core.Constants;
 using DirectPayGateway.Core.Entities;
 using DirectPayGateway.Infrastructure;
 using DirectPayGateway.Infrastructure.Data;
+using DirectPayGateway.Infrastructure.Data.Seeding;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +16,7 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -21,7 +24,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "DirectPay Gateway API",
         Version = "v1",
-        Description = "eFAWATEERcom DirectPay Payment Gateway Integration"
+        Description = "eFAWATEERcom DirectPay Payment Gateway + CTM JSON Integration"
     });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -31,6 +34,15 @@ builder.Services.AddSwaggerGen(c =>
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
+    });
+
+    c.AddSecurityDefinition("Basic", new OpenApiSecurityScheme
+    {
+        Description = "Basic Authentication for CTM endpoints. Enter your credentials.",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "basic"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -72,7 +84,8 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
         ClockSkew = TimeSpan.Zero
     };
-});
+})
+.AddScheme<AuthenticationSchemeOptions, CtmBasicAuthHandler>("CtmBasic", null);
 
 builder.Services.AddAuthorization();
 
@@ -109,6 +122,7 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         await context.Database.MigrateAsync();
 
+        // Seed roles
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         foreach (var role in Roles.All)
         {
@@ -118,6 +132,7 @@ using (var scope = app.Services.CreateScope())
             }
         }
 
+        // Seed admin user
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var adminEmail = "admin@admin.com";
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
@@ -140,6 +155,10 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("Admin user created: admin@admin.com / Admin123!");
             }
         }
+
+        // Seed campaigns from JSON file
+        var campaignSeeder = services.GetRequiredService<CampaignSeeder>();
+        await campaignSeeder.SeedAsync();
     }
     catch (Exception ex)
     {
