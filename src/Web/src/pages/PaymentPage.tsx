@@ -3,6 +3,9 @@ import { useAuth } from '../context/AuthContext';
 import paymentService, { PaymentInitiateRequest } from '../services/payment.service';
 import campaignService, { Campaign } from '../services/campaign.service';
 import useForm from '../hooks/useForm';
+import { QRCodeSVG } from 'qrcode.react';
+
+type PaymentMethod = 'directpay' | 'bankapp';
 
 function PaymentPage() {
   const { user } = useAuth();
@@ -11,6 +14,8 @@ function PaymentPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [loadingCampaigns, setLoadingCampaigns] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('directpay');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchCampaigns = async () => {
@@ -100,6 +105,7 @@ function PaymentPage() {
     setSelectedCampaign(null);
     setFieldValue('billingNo', '');
     setFieldValue('statementNarrative', '');
+    setPaymentMethod('directpay');
   };
 
   const formatAmount = (amount: number) => {
@@ -108,6 +114,16 @@ function PaymentPage() {
       currency: 'JOD',
       minimumFractionDigits: 3,
     }).format(amount);
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   };
 
   return (
@@ -241,6 +257,68 @@ function PaymentPage() {
                   {selectedCampaign.maxAmount > 0 && `Max: ${formatAmount(selectedCampaign.maxAmount)}`}
                 </p>
               )}
+            </div>
+          )}
+
+          {selectedCampaign && (
+            <div className="form-group">
+              <label className="form-label">Payment Method / طريقة الدفع</label>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '12px 16px',
+                    border: paymentMethod === 'directpay' ? '2px solid #007bff' : '1px solid #dee2e6',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    backgroundColor: paymentMethod === 'directpay' ? '#f0f7ff' : '#fff',
+                    flex: '1',
+                    minWidth: '200px',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="directpay"
+                    checked={paymentMethod === 'directpay'}
+                    onChange={() => setPaymentMethod('directpay')}
+                    style={{ accentColor: '#007bff' }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 500 }}>الدفع المباشر (Direct Pay)</div>
+                    <div style={{ fontSize: '12px', color: '#6c757d' }}>Redirect to eFAWATEERcom</div>
+                  </div>
+                </label>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '12px 16px',
+                    border: paymentMethod === 'bankapp' ? '2px solid #007bff' : '1px solid #dee2e6',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    backgroundColor: paymentMethod === 'bankapp' ? '#f0f7ff' : '#fff',
+                    flex: '1',
+                    minWidth: '200px',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="bankapp"
+                    checked={paymentMethod === 'bankapp'}
+                    onChange={() => setPaymentMethod('bankapp')}
+                    style={{ accentColor: '#007bff' }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 500 }}>الدفع عبر تطبيق البنك (Bank App)</div>
+                    <div style={{ fontSize: '12px', color: '#6c757d' }}>Use reference number in bank app</div>
+                  </div>
+                </label>
+              </div>
             </div>
           )}
 
@@ -379,13 +457,163 @@ function PaymentPage() {
             </select>
           </div>
 
-          <button
-            type="submit"
-            className="btn btn-primary btn-block"
-            disabled={isSubmitting || success}
-          >
-            {isSubmitting ? 'Processing...' : success ? 'Redirecting...' : 'Proceed to Payment'}
-          </button>
+          {paymentMethod === 'directpay' && (
+            <button
+              type="submit"
+              className="btn btn-primary btn-block"
+              disabled={isSubmitting || success}
+            >
+              {isSubmitting ? 'Processing...' : success ? 'Redirecting...' : 'Proceed to Payment'}
+            </button>
+          )}
+
+          {paymentMethod === 'bankapp' && selectedCampaign && values.amount > 0 && (
+            <div
+              style={{
+                backgroundColor: '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderRadius: '12px',
+                padding: '24px',
+                marginTop: '16px',
+                direction: 'rtl',
+                textAlign: 'right',
+              }}
+            >
+              <h3 style={{ margin: '0 0 20px 0', color: '#212529', textAlign: 'center' }}>
+                ادفع عبر تطبيق البنك
+              </h3>
+
+              <div
+                style={{
+                  backgroundColor: '#fff',
+                  border: '2px dashed #007bff',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  textAlign: 'center',
+                  marginBottom: '20px',
+                }}
+              >
+                <div style={{ color: '#6c757d', fontSize: '14px', marginBottom: '8px' }}>
+                  الرقم المرجعي / Reference Number
+                </div>
+                <div
+                  style={{
+                    fontSize: '28px',
+                    fontWeight: 'bold',
+                    color: '#007bff',
+                    fontFamily: 'monospace',
+                    letterSpacing: '2px',
+                    marginBottom: '12px',
+                    direction: 'ltr',
+                  }}
+                >
+                  {selectedCampaign.campaignCode}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(selectedCampaign.campaignCode)}
+                  style={{
+                    backgroundColor: copied ? '#28a745' : '#007bff',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 24px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    transition: 'background-color 0.2s',
+                  }}
+                >
+                  {copied ? '✓ تم النسخ' : 'نسخ الرقم'}
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+                <div
+                  style={{
+                    backgroundColor: '#fff',
+                    padding: '16px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  }}
+                >
+                  <QRCodeSVG
+                    value={selectedCampaign.campaignCode}
+                    size={160}
+                    level="M"
+                    includeMargin={true}
+                  />
+                </div>
+              </div>
+
+              <div
+                style={{
+                  backgroundColor: '#fff',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  marginBottom: '16px',
+                }}
+              >
+                <h4 style={{ margin: '0 0 16px 0', color: '#495057' }}>خطوات الدفع:</h4>
+                <ol
+                  style={{
+                    margin: 0,
+                    paddingRight: '20px',
+                    paddingLeft: 0,
+                    listStylePosition: 'inside',
+                  }}
+                >
+                  <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
+                    افتح تطبيق البنك الخاص بك
+                  </li>
+                  <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
+                    اختر "دفع الفواتير" أو "eFAWATEERcom"
+                  </li>
+                  <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
+                    ابحث عن "<strong>{selectedCampaign.custName || selectedCampaign.nameAr}</strong>" أو اختره من القائمة
+                  </li>
+                  <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
+                    أدخل الرقم المرجعي: <strong style={{ direction: 'ltr', display: 'inline-block' }}>{selectedCampaign.campaignCode}</strong>
+                  </li>
+                  <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
+                    أدخل المبلغ: <strong>{values.amount.toFixed(3)} دينار</strong>
+                  </li>
+                  <li style={{ marginBottom: '0', lineHeight: '1.6' }}>
+                    أكد عملية الدفع
+                  </li>
+                </ol>
+              </div>
+
+              <div
+                style={{
+                  backgroundColor: '#d4edda',
+                  border: '1px solid #c3e6cb',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  color: '#155724',
+                  fontSize: '14px',
+                  textAlign: 'center',
+                }}
+              >
+                سيتم تسجيل تبرعك تلقائياً بعد إتمام الدفع
+              </div>
+            </div>
+          )}
+
+          {paymentMethod === 'bankapp' && (!selectedCampaign || values.amount <= 0) && (
+            <div
+              style={{
+                backgroundColor: '#fff3cd',
+                border: '1px solid #ffc107',
+                borderRadius: '8px',
+                padding: '16px',
+                marginTop: '16px',
+                textAlign: 'center',
+                color: '#856404',
+              }}
+            >
+              Please select a campaign and enter an amount to see payment instructions
+            </div>
+          )}
         </form>
       </div>
     </div>
