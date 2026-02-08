@@ -25,6 +25,6 @@ public class TransactionLogConfiguration : IEntityTypeConfiguration<TransactionL
             .HasMaxLength(100);
 
         builder.Property(l => l.Timestamp)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("datetime('now')");
     }
 }

@@ -59,7 +59,7 @@ public class PaymentTransactionConfiguration : IEntityTypeConfiguration<PaymentT
             .HasMaxLength(50);
 
         builder.Property(p => p.CreatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("datetime('now')");
 
         builder.HasMany(p => p.Logs)
             .WithOne(l => l.PaymentTransaction)

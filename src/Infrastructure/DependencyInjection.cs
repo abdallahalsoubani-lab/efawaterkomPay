@@ -18,10 +18,21 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(
-                configuration.GetConnectionString("DefaultConnection"),
-                b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+        var connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
+        
+        if (connectionString.Contains(".db", StringComparison.OrdinalIgnoreCase) || 
+            (connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase) && !connectionString.Contains("Server", StringComparison.OrdinalIgnoreCase)))
+        {
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlite(connectionString));
+        }
+        else
+        {
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(
+                    connectionString,
+                    b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+        }
 
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         {

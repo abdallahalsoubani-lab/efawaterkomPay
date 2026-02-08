@@ -30,6 +30,6 @@ public class CtmAuditLogConfiguration : IEntityTypeConfiguration<CtmAuditLog>
             .HasMaxLength(50);
 
         builder.Property(l => l.Timestamp)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("datetime('now')");
     }
 }

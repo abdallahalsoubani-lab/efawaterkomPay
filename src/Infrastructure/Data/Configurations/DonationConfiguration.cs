@@ -84,7 +84,7 @@ public class DonationConfiguration : IEntityTypeConfiguration<Donation>
             .HasMaxLength(100);
 
         builder.Property(d => d.CreatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("datetime('now')");
 
         builder.HasOne(d => d.Campaign)
             .WithMany(c => c.Donations)
