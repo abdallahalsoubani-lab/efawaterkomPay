@@ -1,12 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import paymentService, { PaymentInitiateRequest } from '../services/payment.service';
+import campaignService, { Campaign } from '../services/campaign.service';
 import useForm from '../hooks/useForm';
 
 function PaymentPage() {
   const { user } = useAuth();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [loadingCampaigns, setLoadingCampaigns] = useState(true);
+
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+      try {
+        const result = await campaignService.getCampaigns({
+          status: 'Active',
+          pageSize: 100,
+          sortBy: 'nameAr',
+        });
+        setCampaigns(result.items);
+      } catch (err) {
+        console.error('Failed to load campaigns:', err);
+      } finally {
+        setLoadingCampaigns(false);
+      }
+    };
+    fetchCampaigns();
+  }, []);
 
   const { values, errors, touched, isSubmitting, handleChange, handleBlur, handleSubmit, setFieldValue } =
     useForm<PaymentInitiateRequest>({
@@ -59,6 +81,35 @@ function PaymentPage() {
       },
     });
 
+  const handleCampaignSelect = (campaignId: string) => {
+    if (!campaignId) {
+      setSelectedCampaign(null);
+      setFieldValue('billingNo', '');
+      setFieldValue('statementNarrative', '');
+      return;
+    }
+    const campaign = campaigns.find((c) => c.id === parseInt(campaignId));
+    if (campaign) {
+      setSelectedCampaign(campaign);
+      setFieldValue('billingNo', campaign.campaignCode);
+      setFieldValue('statementNarrative', campaign.nameAr);
+    }
+  };
+
+  const clearCampaignSelection = () => {
+    setSelectedCampaign(null);
+    setFieldValue('billingNo', '');
+    setFieldValue('statementNarrative', '');
+  };
+
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat('en-JO', {
+      style: 'currency',
+      currency: 'JOD',
+      minimumFractionDigits: 3,
+    }).format(amount);
+  };
+
   return (
     <div className="payment-page">
       <div className="page-header">
@@ -83,13 +134,115 @@ function PaymentPage() {
               name="paymentType"
               className="form-select"
               value={values.paymentType}
-              onChange={(e) => setFieldValue('paymentType', parseInt(e.target.value))}
+              onChange={(e) => {
+                setFieldValue('paymentType', parseInt(e.target.value));
+                if (parseInt(e.target.value) === 2) {
+                  clearCampaignSelection();
+                }
+              }}
               disabled={isSubmitting}
             >
               <option value={1}>Postpaid</option>
               <option value={2}>Prepaid</option>
             </select>
           </div>
+
+          {values.paymentType === 1 && (
+            <div className="form-group">
+              <label className="form-label" htmlFor="campaign">
+                Campaign (Optional)
+              </label>
+              <select
+                id="campaign"
+                name="campaign"
+                className="form-select"
+                value={selectedCampaign?.id || ''}
+                onChange={(e) => handleCampaignSelect(e.target.value)}
+                disabled={isSubmitting || loadingCampaigns}
+              >
+                <option value="">-- Select a campaign or enter billing number manually --</option>
+                {campaigns.map((campaign) => (
+                  <option key={campaign.id} value={campaign.id}>
+                    {campaign.nameAr} - {campaign.custName || 'N/A'} ({formatAmount(campaign.collectedAmount)} / {formatAmount(campaign.targetAmount)})
+                  </option>
+                ))}
+              </select>
+              {loadingCampaigns && (
+                <span className="form-hint">Loading campaigns...</span>
+              )}
+            </div>
+          )}
+
+          {selectedCampaign && (
+            <div className="campaign-details" style={{
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #e9ecef',
+              borderRadius: '8px',
+              padding: '16px',
+              marginBottom: '16px',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <h4 style={{ margin: 0, color: '#495057' }}>{selectedCampaign.nameAr}</h4>
+                <button
+                  type="button"
+                  onClick={clearCampaignSelection}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#6c757d',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    padding: '0 4px',
+                  }}
+                  title="Clear selection"
+                >
+                  ×
+                </button>
+              </div>
+              {selectedCampaign.custName && (
+                <p style={{ margin: '0 0 8px 0', color: '#6c757d', fontSize: '14px' }}>
+                  <strong>Association:</strong> {selectedCampaign.custName}
+                </p>
+              )}
+              {selectedCampaign.descriptionAr && (
+                <p style={{ margin: '0 0 12px 0', color: '#6c757d', fontSize: '14px' }}>
+                  {selectedCampaign.descriptionAr.length > 150
+                    ? selectedCampaign.descriptionAr.substring(0, 150) + '...'
+                    : selectedCampaign.descriptionAr}
+                </p>
+              )}
+              <div style={{ marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px' }}>
+                  <span>Progress</span>
+                  <span>{selectedCampaign.progressPercentage.toFixed(1)}%</span>
+                </div>
+                <div style={{
+                  backgroundColor: '#e9ecef',
+                  borderRadius: '4px',
+                  height: '8px',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    backgroundColor: selectedCampaign.progressPercentage >= 100 ? '#28a745' : '#007bff',
+                    height: '100%',
+                    width: `${Math.min(selectedCampaign.progressPercentage, 100)}%`,
+                    transition: 'width 0.3s ease',
+                  }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#6c757d' }}>
+                <span>{formatAmount(selectedCampaign.collectedAmount)} collected</span>
+                <span>Target: {formatAmount(selectedCampaign.targetAmount)}</span>
+              </div>
+              {(selectedCampaign.minAmount > 0 || selectedCampaign.maxAmount > 0) && (
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#868e96' }}>
+                  {selectedCampaign.minAmount > 0 && `Min: ${formatAmount(selectedCampaign.minAmount)}`}
+                  {selectedCampaign.minAmount > 0 && selectedCampaign.maxAmount > 0 && ' | '}
+                  {selectedCampaign.maxAmount > 0 && `Max: ${formatAmount(selectedCampaign.maxAmount)}`}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="form-group">
             <label className="form-label" htmlFor="amount">
@@ -117,6 +270,11 @@ function PaymentPage() {
             <div className="form-group">
               <label className="form-label" htmlFor="billingNo">
                 Billing Number
+                {selectedCampaign && (
+                  <span style={{ fontWeight: 'normal', color: '#6c757d', fontSize: '12px', marginLeft: '8px' }}>
+                    (Auto-filled from campaign)
+                  </span>
+                )}
               </label>
               <input
                 id="billingNo"
@@ -129,6 +287,8 @@ function PaymentPage() {
                 onBlur={handleBlur}
                 placeholder="Enter billing number"
                 disabled={isSubmitting}
+                readOnly={!!selectedCampaign}
+                style={selectedCampaign ? { backgroundColor: '#f8f9fa', cursor: 'not-allowed' } : undefined}
               />
               {touched.billingNo && errors.billingNo && (
                 <span className="form-error">{errors.billingNo}</span>
@@ -179,6 +339,11 @@ function PaymentPage() {
           <div className="form-group">
             <label className="form-label" htmlFor="statementNarrative">
               Description (Optional)
+              {selectedCampaign && (
+                <span style={{ fontWeight: 'normal', color: '#6c757d', fontSize: '12px', marginLeft: '8px' }}>
+                  (Auto-filled from campaign)
+                </span>
+              )}
             </label>
             <input
               id="statementNarrative"
