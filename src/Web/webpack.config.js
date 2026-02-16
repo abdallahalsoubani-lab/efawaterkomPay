@@ -25,7 +25,7 @@ module.exports = (env, argv) => {
       chunkFilename: isProduction ? 'css/[id].[contenthash:8].css' : 'css/[id].css'
     }),
     new webpack.DefinePlugin({
-      'process.env.API_URL': JSON.stringify(process.env.API_URL || 'http://localhost:5000'),
+      'process.env.API_URL': JSON.stringify(process.env.API_URL ?? 'http://localhost:5000'),
       'process.env.NODE_ENV': JSON.stringify(argv.mode)
     })
   ];

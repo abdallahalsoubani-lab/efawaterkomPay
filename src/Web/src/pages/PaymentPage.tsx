@@ -467,7 +467,7 @@ function PaymentPage() {
             </button>
           )}
 
-          {paymentMethod === 'bankapp' && selectedCampaign && values.amount > 0 && (
+          {paymentMethod === 'bankapp' && selectedCampaign && (
             <div
               style={{
                 backgroundColor: '#f8f9fa',
@@ -566,16 +566,16 @@ function PaymentPage() {
                     افتح تطبيق البنك الخاص بك
                   </li>
                   <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
-                    اختر "دفع الفواتير" أو "eFAWATEERcom"
+                    اختر "دفع الفواتير" أو "إي فواتيركم"
                   </li>
                   <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
-                    ابحث عن "<strong>{selectedCampaign.custName || selectedCampaign.nameAr}</strong>" أو اختره من القائمة
+                    ابحث عن "<strong>منصة عون</strong>" أو "<strong>Oun</strong>"
                   </li>
                   <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
-                    أدخل الرقم المرجعي: <strong style={{ direction: 'ltr', display: 'inline-block' }}>{selectedCampaign.campaignCode}</strong>
+                    أدخل الرقم المرجعي أعلاه
                   </li>
                   <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
-                    أدخل المبلغ: <strong>{values.amount.toFixed(3)} دينار</strong>
+                    أدخل مبلغ التبرع
                   </li>
                   <li style={{ marginBottom: '0', lineHeight: '1.6' }}>
                     أكد عملية الدفع
@@ -599,21 +599,6 @@ function PaymentPage() {
             </div>
           )}
 
-          {paymentMethod === 'bankapp' && (!selectedCampaign || values.amount <= 0) && (
-            <div
-              style={{
-                backgroundColor: '#fff3cd',
-                border: '1px solid #ffc107',
-                borderRadius: '8px',
-                padding: '16px',
-                marginTop: '16px',
-                textAlign: 'center',
-                color: '#856404',
-              }}
-            >
-              Please select a campaign and enter an amount to see payment instructions
-            </div>
-          )}
         </form>
       </div>
     </div>
