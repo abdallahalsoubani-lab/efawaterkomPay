@@ -11,17 +11,20 @@ public class CtmBillerService : ICtmBillerService
 {
     private readonly ICampaignRepository _campaignRepository;
     private readonly IDonationRepository _donationRepository;
+    private readonly IDonationReferenceRepository _donationReferenceRepository;
     private readonly ILogger<CtmBillerService> _logger;
     private readonly string _billerCode;
 
     public CtmBillerService(
         ICampaignRepository campaignRepository,
         IDonationRepository donationRepository,
+        IDonationReferenceRepository donationReferenceRepository,
         IConfiguration configuration,
         ILogger<CtmBillerService> logger)
     {
         _campaignRepository = campaignRepository;
         _donationRepository = donationRepository;
+        _donationReferenceRepository = donationReferenceRepository;
         _logger = logger;
         _billerCode = configuration["CtmIntegration:BillerCode"] ?? "000";
     }
@@ -33,29 +36,49 @@ public class CtmBillerService : ICtmBillerService
 
         _logger.LogInformation("BillPull request for BillingNo: {BillingNo}, GUID: {GUID}", billingNo, guid);
 
-        var campaign = await _campaignRepository.GetByCampaignCodeAsync(billingNo);
+        // First: try DonationReference (dynamic reference number for Bank App)
+        var donationRef = await _donationReferenceRepository.GetByReferenceNumberForBillPullAsync(billingNo);
+        if (donationRef != null)
+        {
+            var campaign = donationRef.Campaign;
+            var dueAmount = donationRef.IntendedAmount ?? 0.000m;
+            var response = BuildBillPullSuccessResponse(guid, campaign, dueAmount, billingNo);
+            _logger.LogInformation("BillPull success via DonationReference: {ReferenceNumber}", billingNo);
+            return response;
+        }
 
-        if (campaign == null)
+        // Fallback: campaign by CampaignCode (backward compatibility)
+        var campaignByCode = await _campaignRepository.GetByCampaignCodeAsync(billingNo);
+
+        if (campaignByCode == null)
         {
             _logger.LogWarning("BillPull: Campaign not found for BillingNo: {BillingNo}", billingNo);
             return BuildBillPullErrorResponse(guid, 1, "Campaign not found");
         }
 
-        if (campaign.Status != "Active")
+        if (campaignByCode.Status != "Active")
         {
             _logger.LogWarning("BillPull: Campaign not active. Code: {Code}, Status: {Status}",
-                campaign.CampaignCode, campaign.Status);
+                campaignByCode.CampaignCode, campaignByCode.Status);
             return BuildBillPullErrorResponse(guid, 2, "Campaign expired or closed");
         }
 
-        if (DateTime.UtcNow > campaign.EndDate)
+        if (DateTime.UtcNow > campaignByCode.EndDate)
         {
             _logger.LogWarning("BillPull: Campaign expired. Code: {Code}, EndDate: {EndDate}",
-                campaign.CampaignCode, campaign.EndDate);
+                campaignByCode.CampaignCode, campaignByCode.EndDate);
             return BuildBillPullErrorResponse(guid, 2, "Campaign expired or closed");
         }
 
-        var response = new MfepBillPullResponse
+        var responseByCode = BuildBillPullSuccessResponse(guid, campaignByCode, 0.000m, null);
+        _logger.LogInformation("BillPull success for campaign: {CampaignCode}", campaignByCode.CampaignCode);
+        return responseByCode;
+    }
+
+    private MfepBillPullResponse BuildBillPullSuccessResponse(string guid, Campaign campaign, decimal dueAmount, string? billingNoOverride = null)
+    {
+        var billingNo = billingNoOverride ?? campaign.CampaignCode;
+        return new MfepBillPullResponse
         {
             MFEP = new BillPullMfepResponse
             {
@@ -90,11 +113,11 @@ public class CtmBillerService : ICtmBillerService
                             },
                             AcctInfo = new AcctInfo
                             {
-                                BillingNo = campaign.CampaignCode,
+                                BillingNo = billingNo,
                                 BillNo = campaign.BillNo
                             },
                             BillStatus = campaign.Status,
-                            DueAmount = "0.000", // Open amount - donor chooses
+                            DueAmount = dueAmount.ToString("F3"),
                             IssueDate = campaign.StartDate.ToString("yyyy-MM-ddTHH:mm:ss"),
                             DueDate = campaign.EndDate.ToString("yyyy-MM-ddTHH:mm:ss"),
                             CloseDate = campaign.EndDate.ToString("yyyy-MM-ddTHH:mm:ss"),
@@ -110,7 +133,7 @@ public class CtmBillerService : ICtmBillerService
                             {
                                 new SubPmt
                                 {
-                                    Amount = "0.000",
+                                    Amount = dueAmount.ToString("F3"),
                                     SetBnkCode = campaign.BankCode,
                                     AcctNo = campaign.IBAN
                                 }
@@ -128,9 +151,6 @@ public class CtmBillerService : ICtmBillerService
                 }
             }
         };
-
-        _logger.LogInformation("BillPull success for campaign: {CampaignCode}", campaign.CampaignCode);
-        return response;
     }
 
     public async Task<MfepPaymentNotificationResponse> HandlePaymentNotificationAsync(
@@ -153,8 +173,18 @@ public class CtmBillerService : ICtmBillerService
                 trxInf.StmtDate, 4, "Duplicate transaction");
         }
 
-        // Find campaign
-        var campaign = await _campaignRepository.GetByCampaignCodeAsync(billingNo);
+        // Find campaign: first try DonationReference (Bank App dynamic reference), then CampaignCode
+        Campaign? campaign = null;
+        DonationReference? donationRef = await _donationReferenceRepository.GetByReferenceNumberAsync(billingNo);
+        if (donationRef != null)
+        {
+            campaign = donationRef.Campaign;
+        }
+        else
+        {
+            campaign = await _campaignRepository.GetByCampaignCodeAsync(billingNo);
+        }
+
         if (campaign == null)
         {
             _logger.LogWarning("PaymentNotification: Campaign not found for BillingNo: {BillingNo}", billingNo);
@@ -204,6 +234,14 @@ public class CtmBillerService : ICtmBillerService
         };
 
         await _donationRepository.CreateAsync(donation);
+
+        // If payment was via DonationReference, mark it Used and link DonationId
+        if (donationRef != null)
+        {
+            donationRef.Status = "Used";
+            donationRef.DonationId = donation.Id;
+            await _donationReferenceRepository.UpdateAsync(donationRef);
+        }
 
         // Update campaign totals using the repository (thread-safe via DB transaction)
         campaign.CollectedAmount += paidAmount;

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import paymentService, { PaymentInitiateRequest } from '../services/payment.service';
 import campaignService, { Campaign } from '../services/campaign.service';
+import donationReferenceService, { CreateDonationReferenceResponse } from '../services/donationReference.service';
 import useForm from '../hooks/useForm';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -16,6 +17,9 @@ function PaymentPage() {
   const [loadingCampaigns, setLoadingCampaigns] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('directpay');
   const [copied, setCopied] = useState(false);
+  const [bankAppReference, setBankAppReference] = useState<CreateDonationReferenceResponse | null>(null);
+  const [loadingReference, setLoadingReference] = useState(false);
+  const [referenceError, setReferenceError] = useState('');
 
   useEffect(() => {
     const fetchCampaigns = async () => {
@@ -106,6 +110,36 @@ function PaymentPage() {
     setFieldValue('billingNo', '');
     setFieldValue('statementNarrative', '');
     setPaymentMethod('directpay');
+    setBankAppReference(null);
+    setReferenceError('');
+  };
+
+  // Clear generated reference when campaign, amount, or payment method changes
+  useEffect(() => {
+    setBankAppReference(null);
+    setReferenceError('');
+  }, [selectedCampaign?.id, values.amount, paymentMethod]);
+
+  const handleGenerateReference = async () => {
+    if (!selectedCampaign || values.amount <= 0) return;
+    setReferenceError('');
+    setLoadingReference(true);
+    try {
+      const data = await donationReferenceService.create({
+        campaignId: selectedCampaign.id,
+        amount: values.amount,
+        email: values.customerEmail || undefined,
+      });
+      if (data && data.referenceNumber) {
+        setBankAppReference(data);
+      } else {
+        setReferenceError('Failed to generate reference');
+      }
+    } catch (err: any) {
+      setReferenceError(err.response?.data?.error?.message || err.message || 'Failed to generate reference');
+    } finally {
+      setLoadingReference(false);
+    }
   };
 
   const formatAmount = (amount: number) => {
@@ -483,119 +517,161 @@ function PaymentPage() {
                 ادفع عبر تطبيق البنك
               </h3>
 
-              <div
-                style={{
-                  backgroundColor: '#fff',
-                  border: '2px dashed #007bff',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  textAlign: 'center',
-                  marginBottom: '20px',
-                }}
-              >
-                <div style={{ color: '#6c757d', fontSize: '14px', marginBottom: '8px' }}>
-                  الرقم المرجعي / Reference Number
-                </div>
-                <div
-                  style={{
-                    fontSize: '28px',
-                    fontWeight: 'bold',
-                    color: '#007bff',
-                    fontFamily: 'monospace',
-                    letterSpacing: '2px',
-                    marginBottom: '12px',
-                    direction: 'ltr',
-                  }}
-                >
-                  {selectedCampaign.campaignCode}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => copyToClipboard(selectedCampaign.campaignCode)}
-                  style={{
-                    backgroundColor: copied ? '#28a745' : '#007bff',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '8px 24px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    transition: 'background-color 0.2s',
-                  }}
-                >
-                  {copied ? '✓ تم النسخ' : 'نسخ الرقم'}
-                </button>
-              </div>
+              {!bankAppReference ? (
+                <>
+                  {values.amount <= 0 ? (
+                    <div
+                      style={{
+                        backgroundColor: '#fff3cd',
+                        border: '1px solid #ffc107',
+                        borderRadius: '8px',
+                        padding: '16px',
+                        marginBottom: '16px',
+                        textAlign: 'center',
+                        color: '#856404',
+                      }}
+                    >
+                      أدخل مبلغ التبرع أعلاه ثم اضغط "توليد الرقم المرجعي"
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                      <button
+                        type="button"
+                        onClick={handleGenerateReference}
+                        disabled={loadingReference}
+                        className="btn btn-primary"
+                        style={{ minWidth: '220px' }}
+                      >
+                        {loadingReference ? 'جاري التوليد...' : 'توليد الرقم المرجعي'}
+                      </button>
+                    </div>
+                  )}
+                  {referenceError && (
+                    <div className="alert alert-error" style={{ marginBottom: '16px' }}>
+                      {referenceError}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      backgroundColor: '#fff',
+                      border: '2px dashed #007bff',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      textAlign: 'center',
+                      marginBottom: '20px',
+                    }}
+                  >
+                    <div style={{ color: '#6c757d', fontSize: '14px', marginBottom: '8px' }}>
+                      الرقم المرجعي / Reference Number
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '28px',
+                        fontWeight: 'bold',
+                        color: '#007bff',
+                        fontFamily: 'monospace',
+                        letterSpacing: '2px',
+                        marginBottom: '12px',
+                        direction: 'ltr',
+                      }}
+                    >
+                      {bankAppReference.referenceNumber}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(bankAppReference.referenceNumber)}
+                      style={{
+                        backgroundColor: copied ? '#28a745' : '#007bff',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 24px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        transition: 'background-color 0.2s',
+                      }}
+                    >
+                      {copied ? '✓ تم النسخ' : 'نسخ الرقم'}
+                    </button>
+                    <div style={{ marginTop: '12px', fontSize: '13px', color: '#6c757d' }}>
+                      صالح حتى: {new Date(bankAppReference.expiresAt).toLocaleString('ar-JO')}
+                    </div>
+                  </div>
 
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
-                <div
-                  style={{
-                    backgroundColor: '#fff',
-                    padding: '16px',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  }}
-                >
-                  <QRCodeSVG
-                    value={selectedCampaign.campaignCode}
-                    size={160}
-                    level="M"
-                    includeMargin={true}
-                  />
-                </div>
-              </div>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+                    <div
+                      style={{
+                        backgroundColor: '#fff',
+                        padding: '16px',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      }}
+                    >
+                      <QRCodeSVG
+                        value={bankAppReference.referenceNumber}
+                        size={160}
+                        level="M"
+                        includeMargin={true}
+                      />
+                    </div>
+                  </div>
 
-              <div
-                style={{
-                  backgroundColor: '#fff',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  marginBottom: '16px',
-                }}
-              >
-                <h4 style={{ margin: '0 0 16px 0', color: '#495057' }}>خطوات الدفع:</h4>
-                <ol
-                  style={{
-                    margin: 0,
-                    paddingRight: '20px',
-                    paddingLeft: 0,
-                    listStylePosition: 'inside',
-                  }}
-                >
-                  <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
-                    افتح تطبيق البنك الخاص بك
-                  </li>
-                  <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
-                    اختر "دفع الفواتير" أو "إي فواتيركم"
-                  </li>
-                  <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
-                    ابحث عن "<strong>منصة عون</strong>" أو "<strong>Oun</strong>"
-                  </li>
-                  <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
-                    أدخل الرقم المرجعي أعلاه
-                  </li>
-                  <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
-                    أدخل مبلغ التبرع
-                  </li>
-                  <li style={{ marginBottom: '0', lineHeight: '1.6' }}>
-                    أكد عملية الدفع
-                  </li>
-                </ol>
-              </div>
+                  <div
+                    style={{
+                      backgroundColor: '#fff',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    <h4 style={{ margin: '0 0 16px 0', color: '#495057' }}>خطوات الدفع:</h4>
+                    <ol
+                      style={{
+                        margin: 0,
+                        paddingRight: '20px',
+                        paddingLeft: 0,
+                        listStylePosition: 'inside',
+                      }}
+                    >
+                      <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
+                        افتح تطبيق البنك الخاص بك
+                      </li>
+                      <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
+                        اختر "دفع الفواتير" أو "إي فواتيركم"
+                      </li>
+                      <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
+                        ابحث عن "<strong>منصة عون</strong>" أو "<strong>Oun</strong>"
+                      </li>
+                      <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
+                        أدخل الرقم المرجعي أعلاه
+                      </li>
+                      <li style={{ marginBottom: '12px', lineHeight: '1.6' }}>
+                        أدخل مبلغ التبرع
+                      </li>
+                      <li style={{ marginBottom: '0', lineHeight: '1.6' }}>
+                        أكد عملية الدفع
+                      </li>
+                    </ol>
+                  </div>
 
-              <div
-                style={{
-                  backgroundColor: '#d4edda',
-                  border: '1px solid #c3e6cb',
-                  borderRadius: '8px',
-                  padding: '12px 16px',
-                  color: '#155724',
-                  fontSize: '14px',
-                  textAlign: 'center',
-                }}
-              >
-                سيتم تسجيل تبرعك تلقائياً بعد إتمام الدفع
-              </div>
+                  <div
+                    style={{
+                      backgroundColor: '#d4edda',
+                      border: '1px solid #c3e6cb',
+                      borderRadius: '8px',
+                      padding: '12px 16px',
+                      color: '#155724',
+                      fontSize: '14px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    سيتم تسجيل تبرعك تلقائياً بعد إتمام الدفع
+                  </div>
+                </>
+              )}
             </div>
           )}
 

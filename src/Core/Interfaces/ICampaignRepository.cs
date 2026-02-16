@@ -31,3 +31,12 @@ public interface ICtmAuditLogRepository
     Task<CtmAuditLog> CreateAsync(CtmAuditLog log);
     Task<PagedResult<CtmAuditLog>> GetPagedAsync(CtmAuditLogFilterRequest filter);
 }
+
+public interface IDonationReferenceRepository
+{
+    Task<DonationReference?> GetByReferenceNumberAsync(string referenceNumber);
+    Task<DonationReference> CreateAsync(DonationReference donationReference);
+    Task<DonationReference> UpdateAsync(DonationReference donationReference);
+    Task<DonationReference?> GetByReferenceNumberForBillPullAsync(string referenceNumber);
+    Task<string?> GetMaxReferenceNumberWithPrefixAsync(string prefix);
+}

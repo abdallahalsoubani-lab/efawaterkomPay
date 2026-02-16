@@ -90,4 +90,5 @@ public class Campaign
     public DateTime? UpdatedAt { get; set; }
 
     public virtual ICollection<Donation> Donations { get; set; } = new List<Donation>();
+    public virtual ICollection<DonationReference> DonationReferences { get; set; } = new List<DonationReference>();
 }

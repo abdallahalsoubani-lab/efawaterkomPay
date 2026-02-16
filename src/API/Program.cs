@@ -13,6 +13,30 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
+static async Task EnsureDonationReferencesTableAsync(ApplicationDbContext context)
+{
+    if (!context.Database.IsSqlite()) return;
+    await context.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS DonationReferences (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ReferenceNumber TEXT NOT NULL,
+            CampaignId INTEGER NOT NULL,
+            IntendedAmount decimal(18,3),
+            PayerEmail TEXT,
+            Status TEXT NOT NULL,
+            CreatedAt TEXT NOT NULL,
+            ExpiresAt TEXT NOT NULL,
+            DonationId INTEGER,
+            FOREIGN KEY (CampaignId) REFERENCES Campaigns(Id),
+            FOREIGN KEY (DonationId) REFERENCES Donations(Id)
+        )");
+    await context.Database.ExecuteSqlRawAsync("CREATE UNIQUE INDEX IF NOT EXISTS IX_DonationReferences_ReferenceNumber ON DonationReferences(ReferenceNumber)");
+    await context.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_DonationReferences_CampaignId ON DonationReferences(CampaignId)");
+    await context.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_DonationReferences_Status ON DonationReferences(Status)");
+    await context.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_DonationReferences_ExpiresAt ON DonationReferences(ExpiresAt)");
+    await context.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_DonationReferences_DonationId ON DonationReferences(DonationId)");
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -122,6 +146,9 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         await context.Database.EnsureCreatedAsync();
 
+        // Ensure DonationReferences table exists (for existing DBs created before this feature)
+        await EnsureDonationReferencesTableAsync(context);
+
         // Seed roles
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         foreach (var role in Roles.All)
@@ -181,7 +208,10 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseIpRateLimiting();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("AllowFrontend");
 

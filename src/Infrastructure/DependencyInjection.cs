@@ -5,6 +5,7 @@ using DirectPayGateway.Infrastructure.Data;
 using DirectPayGateway.Infrastructure.Data.Seeding;
 using DirectPayGateway.Infrastructure.ExternalServices;
 using DirectPayGateway.Infrastructure.Repositories;
+using DirectPayGateway.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -67,6 +68,8 @@ public static class DependencyInjection
         services.AddScoped<ICampaignRepository, CampaignRepository>();
         services.AddScoped<IDonationRepository, DonationRepository>();
         services.AddScoped<ICtmAuditLogRepository, CtmAuditLogRepository>();
+        services.AddScoped<IDonationReferenceRepository, DonationReferenceRepository>();
+        services.AddScoped<IDonationReferenceService, DonationReferenceService>();
         services.AddScoped<ICtmBillerService, CtmBillerService>();
         services.AddScoped<CampaignSeeder>();
 
