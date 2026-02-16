@@ -38,6 +38,138 @@
         "email": "info@abqalnoor.org.jo",
         "phone": "+962772131248"
       }
+    },
+    {
+      "campaignCode": "2",
+      "billNo": "420174208",
+      "nameAr": "كسوة الشتاء - دفء وأمان",
+      "nameEn": "Winter Clothing - Warmth and Safety",
+      "descriptionAr": "حملة كسوة الشتاء تهدف لتوفير ملابس شتوية دافئة للأسر المحتاجة والأيتام في المناطق الأكثر برودة. ساهم معنا في إدخال الدفء على قلوب من هم بأمس الحاجة خلال فصل الشتاء القارس.",
+      "descriptionEn": "Winter clothing campaign aims to provide warm winter clothes for families in need and orphans in the coldest areas. Contribute with us to bring warmth to those most in need during the harsh winter.",
+      "category": "Clothing",
+      "serviceType": "Donations",
+      "status": "Active",
+      "billType": "Recurring",
+      "billCustomerCat": "Citizen",
+      "targetAmount": 50000.000,
+      "collectedAmount": 12500.000,
+      "donorsCount": 340,
+      "startDate": "2025-11-01T00:00:00",
+      "endDate": "2026-03-31T23:59:59",
+      "paymentConstraints": {
+        "allowPartialPayment": true,
+        "minAmount": 2.000,
+        "maxAmount": 50000.000
+      },
+      "bankAccount": {
+        "iban": "JO69JBA0720001921246410400035",
+        "bankCode": "07"
+      },
+      "additionalInfo": {
+        "custName": "جمعية الإحسان الخيرية",
+        "freeText": "كسوة شتاء للأسر المحتاجة",
+        "email": "info@ihsan.org.jo",
+        "phone": "+962791234567"
+      }
+    },
+    {
+      "campaignCode": "3",
+      "billNo": "420174209",
+      "nameAr": "سقيا الماء - ارتواء الحياة",
+      "nameEn": "Water Supply - Quenching Life",
+      "descriptionAr": "حملة سقيا الماء تهدف لحفر آبار مياه وتوفير مياه شرب نظيفة للقرى والمناطق النائية التي تعاني من شح المياه. مساهمتك تعني حياة أفضل لآلاف الأسر.",
+      "descriptionEn": "Water supply campaign aims to dig water wells and provide clean drinking water to villages and remote areas suffering from water scarcity. Your contribution means a better life for thousands of families.",
+      "category": "Water",
+      "serviceType": "Donations",
+      "status": "Active",
+      "billType": "Recurring",
+      "billCustomerCat": "Citizen",
+      "targetAmount": 200000.000,
+      "collectedAmount": 45000.000,
+      "donorsCount": 890,
+      "startDate": "2026-01-01T00:00:00",
+      "endDate": "2026-12-31T23:59:59",
+      "paymentConstraints": {
+        "allowPartialPayment": true,
+        "minAmount": 5.000,
+        "maxAmount": 200000.000
+      },
+      "bankAccount": {
+        "iban": "JO69JBA0720001921246410400036",
+        "bankCode": "07"
+      },
+      "additionalInfo": {
+        "custName": "مؤسسة ينابيع الخير",
+        "freeText": "سقيا ماء للمناطق النائية",
+        "email": "info@yanabee.org.jo",
+        "phone": "+962781234567"
+      }
+    },
+    {
+      "campaignCode": "4",
+      "billNo": "420174210",
+      "nameAr": "كفالة يتيم - مستقبل مشرق",
+      "nameEn": "Orphan Sponsorship - Bright Future",
+      "descriptionAr": "حملة كفالة الأيتام تهدف لتوفير الرعاية الشاملة للأيتام من تعليم وصحة وغذاء وسكن. اكفل يتيمًا وكن سببًا في بناء مستقبل مشرق لطفل فقد والديه.",
+      "descriptionEn": "Orphan sponsorship campaign aims to provide comprehensive care for orphans including education, health, food, and housing. Sponsor an orphan and be the reason for building a bright future.",
+      "category": "Orphans",
+      "serviceType": "Donations",
+      "status": "Active",
+      "billType": "Recurring",
+      "billCustomerCat": "Citizen",
+      "targetAmount": 150000.000,
+      "collectedAmount": 67800.000,
+      "donorsCount": 1250,
+      "startDate": "2025-06-01T00:00:00",
+      "endDate": "2026-06-01T23:59:59",
+      "paymentConstraints": {
+        "allowPartialPayment": true,
+        "minAmount": 10.000,
+        "maxAmount": 150000.000
+      },
+      "bankAccount": {
+        "iban": "JO69JBA0720001921246410400037",
+        "bankCode": "07"
+      },
+      "additionalInfo": {
+        "custName": "جمعية رعاية الأيتام",
+        "freeText": "كفالة يتيم - رعاية شاملة",
+        "email": "info@orphancare.org.jo",
+        "phone": "+962771234567"
+      }
+    },
+    {
+      "campaignCode": "5",
+      "billNo": "420174211",
+      "nameAr": "إفطار صائم - موائد الرحمة",
+      "nameEn": "Iftar for Fasting - Tables of Mercy",
+      "descriptionAr": "حملة إفطار صائم تهدف لتوفير وجبات إفطار للصائمين في شهر رمضان المبارك. ساهم في إطعام الصائمين والمحتاجين واحصل على أجر عظيم.",
+      "descriptionEn": "Iftar campaign aims to provide meals for fasting people during the holy month of Ramadan. Contribute to feeding fasting people and those in need.",
+      "category": "Food",
+      "serviceType": "Donations",
+      "status": "Active",
+      "billType": "Recurring",
+      "billCustomerCat": "Citizen",
+      "targetAmount": 75000.000,
+      "collectedAmount": 5200.000,
+      "donorsCount": 180,
+      "startDate": "2026-02-01T00:00:00",
+      "endDate": "2026-04-30T23:59:59",
+      "paymentConstraints": {
+        "allowPartialPayment": true,
+        "minAmount": 1.000,
+        "maxAmount": 75000.000
+      },
+      "bankAccount": {
+        "iban": "JO69JBA0720001921246410400038",
+        "bankCode": "07"
+      },
+      "additionalInfo": {
+        "custName": "جمعية البر والإحسان",
+        "freeText": "إفطار صائم في رمضان",
+        "email": "info@birr.org.jo",
+        "phone": "+962761234567"
+      }
     }
   ]
 }
