@@ -30,4 +30,8 @@ public class BillPullRequestBody
     [JsonPropertyName("ServiceType")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ServiceType { get; set; }
+
+    [JsonPropertyName("PayerInfo")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public PayerInfo? PayerInfo { get; set; }
 }

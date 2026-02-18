@@ -16,6 +16,7 @@ import CampaignsPage from './pages/admin/CampaignsPage';
 import CampaignDetailPage from './pages/admin/CampaignDetailPage';
 import NewCampaignPage from './pages/admin/NewCampaignPage';
 import DonationsPage from './pages/admin/DonationsPage';
+import CtmApiLogsPage from './pages/admin/CtmApiLogsPage';
 import CampaignsPublicPage from './pages/CampaignsPublicPage';
 
 function App() {
@@ -55,6 +56,7 @@ function App() {
             <Route path="/admin/campaigns/new" element={<NewCampaignPage />} />
             <Route path="/admin/campaigns/:id" element={<CampaignDetailPage />} />
             <Route path="/admin/donations" element={<DonationsPage />} />
+            <Route path="/admin/ctm-logs" element={<CtmApiLogsPage />} />
           </Route>
         </Route>
       </Route>

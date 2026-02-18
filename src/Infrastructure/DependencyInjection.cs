@@ -71,6 +71,7 @@ public static class DependencyInjection
         services.AddScoped<IDonationReferenceRepository, DonationReferenceRepository>();
         services.AddScoped<IDonationReferenceService, DonationReferenceService>();
         services.AddScoped<ICtmBillerService, CtmBillerService>();
+        services.AddScoped<ICtmLoggingService, CtmLoggingService>();
         services.AddScoped<CampaignSeeder>();
 
         return services;

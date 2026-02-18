@@ -13,7 +13,7 @@ public class CtmBillerService : ICtmBillerService
     private readonly IDonationRepository _donationRepository;
     private readonly IDonationReferenceRepository _donationReferenceRepository;
     private readonly ILogger<CtmBillerService> _logger;
-    private readonly string _billerCode;
+    private readonly int _billerCode;
 
     public CtmBillerService(
         ICampaignRepository campaignRepository,
@@ -26,7 +26,7 @@ public class CtmBillerService : ICtmBillerService
         _donationRepository = donationRepository;
         _donationReferenceRepository = donationReferenceRepository;
         _logger = logger;
-        _billerCode = configuration["CtmIntegration:BillerCode"] ?? "000";
+        _billerCode = int.TryParse(configuration["CtmIntegration:BillerCode"], out var code) ? code : 0;
     }
 
     public async Task<MfepBillPullResponse> HandleBillPullAsync(MfepBillPullRequest request)
@@ -165,12 +165,13 @@ public class CtmBillerService : ICtmBillerService
             "PaymentNotification for JOEBPPSTrx: {JOEBPPSTrx}, BillingNo: {BillingNo}, GUID: {GUID}",
             joebppsTrx, billingNo, guid);
 
-        // Check for duplicate transaction
+        // Idempotent: if this transaction was already processed, return success
         if (await _donationRepository.ExistsByJOEBPPSTrxAsync(joebppsTrx))
         {
-            _logger.LogWarning("PaymentNotification: Duplicate JOEBPPSTrx: {JOEBPPSTrx}", joebppsTrx);
-            return BuildPaymentNotificationErrorResponse(guid, joebppsTrx, trxInf.ProcessDate,
-                trxInf.StmtDate, 4, "Duplicate transaction");
+            _logger.LogInformation(
+                "PaymentNotification: Idempotent return for already-processed JOEBPPSTrx: {JOEBPPSTrx}",
+                joebppsTrx);
+            return BuildPaymentNotificationSuccessResponse(guid, joebppsTrx, trxInf.ProcessDate, trxInf.StmtDate);
         }
 
         // Find campaign: first try DonationReference (Bank App dynamic reference), then CampaignCode
@@ -212,7 +213,7 @@ public class CtmBillerService : ICtmBillerService
             CampaignId = campaign.Id,
             JOEBPPSTrx = joebppsTrx,
             BankTrxId = trxInf.BankTrxId,
-            BankCode = trxInf.BankCode,
+            BankCode = trxInf.BankCode?.ToString(),
             BillingNo = billingNo,
             BillNo = trxInf.AcctInfo.BillNo,
             DueAmount = dueAmount,
@@ -253,46 +254,7 @@ public class CtmBillerService : ICtmBillerService
             "PaymentNotification processed. JOEBPPSTrx: {JOEBPPSTrx}, Amount: {Amount}, Campaign: {CampaignCode}",
             joebppsTrx, paidAmount, campaign.CampaignCode);
 
-        return new MfepPaymentNotificationResponse
-        {
-            MFEP = new PaymentNotificationMfepResponse
-            {
-                MsgHeader = new MsgHeader
-                {
-                    TmStp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss"),
-                    GUID = guid,
-                    TrsInf = new TrsInf
-                    {
-                        SdrCode = _billerCode,
-                        ResTyp = "BLRPMTNTFRS"
-                    },
-                    Result = new MfepResult
-                    {
-                        ErrorCode = 0,
-                        ErrorDesc = "Success",
-                        Severity = "Info"
-                    }
-                },
-                MsgBody = new PaymentNotificationResponseBody
-                {
-                    Transactions = new PaymentNotificationResponseTransactions
-                    {
-                        TrxInf = new PaymentNotificationResponseTrxInf
-                        {
-                            JOEBPPSTrx = joebppsTrx,
-                            ProcessDate = trxInf.ProcessDate,
-                            STMTDate = trxInf.StmtDate,
-                            Result = new MfepResult
-                            {
-                                ErrorCode = 0,
-                                ErrorDesc = "Success",
-                                Severity = "Info"
-                            }
-                        }
-                    }
-                }
-            }
-        };
+        return BuildPaymentNotificationSuccessResponse(guid, joebppsTrx, trxInf.ProcessDate, trxInf.StmtDate);
     }
 
     public async Task<MfepPaymentAcknowledgmentResponse> HandlePaymentAcknowledgmentAsync(
@@ -391,6 +353,51 @@ public class CtmBillerService : ICtmBillerService
                 {
                     RecCount = 0,
                     BillRec = new List<BillRecord>()
+                }
+            }
+        };
+    }
+
+    private MfepPaymentNotificationResponse BuildPaymentNotificationSuccessResponse(
+        string guid, string joebppsTrx, string processDate, string stmtDate)
+    {
+        return new MfepPaymentNotificationResponse
+        {
+            MFEP = new PaymentNotificationMfepResponse
+            {
+                MsgHeader = new MsgHeader
+                {
+                    TmStp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    GUID = guid,
+                    TrsInf = new TrsInf
+                    {
+                        SdrCode = _billerCode,
+                        ResTyp = "BLRPMTNTFRS"
+                    },
+                    Result = new MfepResult
+                    {
+                        ErrorCode = 0,
+                        ErrorDesc = "Success",
+                        Severity = "Info"
+                    }
+                },
+                MsgBody = new PaymentNotificationResponseBody
+                {
+                    Transactions = new PaymentNotificationResponseTransactions
+                    {
+                        TrxInf = new PaymentNotificationResponseTrxInf
+                        {
+                            JOEBPPSTrx = joebppsTrx,
+                            ProcessDate = processDate,
+                            STMTDate = stmtDate,
+                            Result = new MfepResult
+                            {
+                                ErrorCode = 0,
+                                ErrorDesc = "Success",
+                                Severity = "Info"
+                            }
+                        }
+                    }
                 }
             }
         };

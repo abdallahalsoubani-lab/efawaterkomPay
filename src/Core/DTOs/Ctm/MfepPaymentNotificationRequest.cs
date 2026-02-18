@@ -44,7 +44,7 @@ public class PaymentNotificationTrxInf
 
     [JsonPropertyName("BankCode")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? BankCode { get; set; }
+    public int? BankCode { get; set; }
 
     [JsonPropertyName("PmtStatus")]
     public string PmtStatus { get; set; } = string.Empty;

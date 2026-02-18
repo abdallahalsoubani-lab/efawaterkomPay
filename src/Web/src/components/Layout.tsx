@@ -72,6 +72,10 @@ function Layout() {
                 <span className="icon">&#128156;</span>
                 Donations
               </Link>
+              <Link to="/admin/ctm-logs" className={`menu-item ${isActive('/admin/ctm-logs') ? 'active' : ''}`}>
+                <span className="icon">&#128220;</span>
+                CTM Logs
+              </Link>
             </div>
           )}
         </div>

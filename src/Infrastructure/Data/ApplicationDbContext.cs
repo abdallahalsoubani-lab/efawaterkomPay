@@ -19,6 +19,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Donation> Donations { get; set; }
     public DbSet<CtmAuditLog> CtmAuditLogs { get; set; }
     public DbSet<DonationReference> DonationReferences { get; set; }
+    public DbSet<CtmApiLog> CtmApiLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -32,5 +33,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.ApplyConfiguration(new DonationConfiguration());
         builder.ApplyConfiguration(new CtmAuditLogConfiguration());
         builder.ApplyConfiguration(new DonationReferenceConfiguration());
+        builder.ApplyConfiguration(new CtmApiLogConfiguration());
     }
 }

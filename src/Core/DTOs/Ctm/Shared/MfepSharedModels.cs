@@ -21,12 +21,11 @@ public class MsgHeader
 public class TrsInf
 {
     [JsonPropertyName("SdrCode")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? SdrCode { get; set; }
+    public int SdrCode { get; set; }
 
     [JsonPropertyName("RcvCode")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? RcvCode { get; set; }
+    public int? RcvCode { get; set; }
 
     [JsonPropertyName("ReqTyp")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -60,7 +59,7 @@ public class AcctInfo
 
     [JsonPropertyName("BillerCode")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? BillerCode { get; set; }
+    public int? BillerCode { get; set; }
 }
 
 public class PmtConst

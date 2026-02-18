@@ -52,8 +52,8 @@ public class CtmTestController : ControllerBase
                     GUID = Guid.NewGuid().ToString(),
                     TrsInf = new TrsInf
                     {
-                        SdrCode = "CTM",
-                        RcvCode = _configuration["CtmIntegration:BillerCode"] ?? "000",
+                        SdrCode = 1,
+                        RcvCode = int.TryParse(_configuration["CtmIntegration:BillerCode"], out var bpCode) ? bpCode : 0,
                         ReqTyp = "BILPULRQ"
                     }
                 },
@@ -64,13 +64,13 @@ public class CtmTestController : ControllerBase
                         BillingNo = request.CampaignCode,
                         BillNo = request.BillNo
                     },
-                    ServiceType = "Donations"
-                },
-                PayerInfo = new PayerInfo
-                {
-                    IdType = "NAT",
-                    Id = request.PayerId ?? "9901234567",
-                    Nation = "JO"
+                    ServiceType = "Donations",
+                    PayerInfo = new PayerInfo
+                    {
+                        IdType = "NAT",
+                        Id = request.PayerId ?? "9901234567",
+                        Nation = "JO"
+                    }
                 }
             }
         };
@@ -105,8 +105,8 @@ public class CtmTestController : ControllerBase
                     GUID = Guid.NewGuid().ToString(),
                     TrsInf = new TrsInf
                     {
-                        SdrCode = "CTM",
-                        RcvCode = _configuration["CtmIntegration:BillerCode"] ?? "000",
+                        SdrCode = 1,
+                        RcvCode = int.TryParse(_configuration["CtmIntegration:BillerCode"], out var pnCode) ? pnCode : 0,
                         ReqTyp = "BLRPMTNTFRQ"
                     }
                 },
@@ -124,7 +124,7 @@ public class CtmTestController : ControllerBase
                             JOEBPPSTrx = request.JOEBPPSTrx
                                 ?? $"{DateTime.UtcNow:yyyyMMddHHmmss}{Random.Shared.Next(1000, 9999)}",
                             BankTrxId = $"BNK{Random.Shared.Next(100000, 999999)}",
-                            BankCode = request.BankCode ?? "020",
+                            BankCode = int.TryParse(request.BankCode, out var bankCode) ? bankCode : 20,
                             PmtStatus = "Paid",
                             DueAmt = request.Amount.ToString("F3"),
                             PaidAmt = request.Amount.ToString("F3"),
@@ -182,8 +182,8 @@ public class CtmTestController : ControllerBase
                     GUID = Guid.NewGuid().ToString(),
                     TrsInf = new TrsInf
                     {
-                        SdrCode = "CTM",
-                        RcvCode = _configuration["CtmIntegration:BillerCode"] ?? "000",
+                        SdrCode = 1,
+                        RcvCode = int.TryParse(_configuration["CtmIntegration:BillerCode"], out var ackCode) ? ackCode : 0,
                         ResTyp = "PMTACKRQ"
                     }
                 },
@@ -194,7 +194,7 @@ public class CtmTestController : ControllerBase
                         AcctInfo = new AcctInfo
                         {
                             BillingNo = request.CampaignCode,
-                            BillerCode = _configuration["CtmIntegration:BillerCode"] ?? "000"
+                            BillerCode = int.TryParse(_configuration["CtmIntegration:BillerCode"], out var billerCode) ? billerCode : 0
                         },
                         JOEBPPSTrx = request.JOEBPPSTrx,
                         ParTrxId = $"PTX{Random.Shared.Next(100, 999)}",

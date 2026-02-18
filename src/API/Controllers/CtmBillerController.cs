@@ -16,15 +16,18 @@ public class CtmBillerController : ControllerBase
 {
     private readonly ICtmBillerService _ctmService;
     private readonly ICtmAuditLogRepository _auditLogRepository;
+    private readonly ICtmLoggingService _ctmLoggingService;
     private readonly ILogger<CtmBillerController> _logger;
 
     public CtmBillerController(
         ICtmBillerService ctmService,
         ICtmAuditLogRepository auditLogRepository,
+        ICtmLoggingService ctmLoggingService,
         ILogger<CtmBillerController> logger)
     {
         _ctmService = ctmService;
         _auditLogRepository = auditLogRepository;
+        _ctmLoggingService = ctmLoggingService;
         _logger = logger;
     }
 
@@ -36,21 +39,29 @@ public class CtmBillerController : ControllerBase
         var requestBody = JsonSerializer.Serialize(request);
         var guid = request.MFEP?.MsgHeader?.GUID ?? "unknown";
         var ipAddress = HttpContext.GetClientIpAddress();
+        var userAgent = HttpContext.GetUserAgent();
+        var billingNo = request.MFEP?.MsgBody?.AcctInfo?.BillingNo;
 
         _logger.LogInformation("CTM BillPull received. GUID: {GUID}, IP: {IP}", guid, ipAddress);
 
+        var apiLog = await _ctmLoggingService.LogRequestAsync("bill-pull", requestBody, ipAddress, userAgent);
+
         MfepBillPullResponse response;
         int errorCode = 0;
+        string? errorMessage = null;
 
         try
         {
             response = await _ctmService.HandleBillPullAsync(request);
             errorCode = response.MFEP.MsgHeader.Result?.ErrorCode ?? 0;
+            if (errorCode != 0)
+                errorMessage = response.MFEP.MsgHeader.Result?.ErrorDesc;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "CTM BillPull error. GUID: {GUID}", guid);
             errorCode = 5;
+            errorMessage = ex.Message;
             response = BuildBillPullInternalErrorResponse(guid);
         }
 
@@ -71,6 +82,10 @@ public class CtmBillerController : ControllerBase
             DurationMs = stopwatch.ElapsedMilliseconds
         });
 
+        await _ctmLoggingService.UpdateLogWithResponseAsync(
+            apiLog.Id, responseBody, errorCode == 0 ? 200 : 400, stopwatch.ElapsedMilliseconds,
+            billingNo: billingNo, errorMessage: errorMessage);
+
         return Ok(response);
     }
 
@@ -82,21 +97,30 @@ public class CtmBillerController : ControllerBase
         var requestBody = JsonSerializer.Serialize(request);
         var guid = request.MFEP?.MsgHeader?.GUID ?? "unknown";
         var ipAddress = HttpContext.GetClientIpAddress();
+        var userAgent = HttpContext.GetUserAgent();
+        var billingNo = request.MFEP?.MsgBody?.Transactions?.TrxInf?.AcctInfo?.BillingNo;
+        var joebppsTrx = request.MFEP?.MsgBody?.Transactions?.TrxInf?.JOEBPPSTrx;
 
         _logger.LogInformation("CTM PaymentNotification received. GUID: {GUID}, IP: {IP}", guid, ipAddress);
 
+        var apiLog = await _ctmLoggingService.LogRequestAsync("payment-notification", requestBody, ipAddress, userAgent);
+
         MfepPaymentNotificationResponse response;
         int errorCode = 0;
+        string? errorMessage = null;
 
         try
         {
             response = await _ctmService.HandlePaymentNotificationAsync(request);
             errorCode = response.MFEP.MsgHeader.Result?.ErrorCode ?? 0;
+            if (errorCode != 0)
+                errorMessage = response.MFEP.MsgHeader.Result?.ErrorDesc;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "CTM PaymentNotification error. GUID: {GUID}", guid);
             errorCode = 5;
+            errorMessage = ex.Message;
             response = BuildPaymentNotificationInternalErrorResponse(guid, request);
         }
 
@@ -117,6 +141,10 @@ public class CtmBillerController : ControllerBase
             DurationMs = stopwatch.ElapsedMilliseconds
         });
 
+        await _ctmLoggingService.UpdateLogWithResponseAsync(
+            apiLog.Id, responseBody, errorCode == 0 ? 200 : 400, stopwatch.ElapsedMilliseconds,
+            billingNo: billingNo, joebppsTrx: joebppsTrx, errorMessage: errorMessage);
+
         return Ok(response);
     }
 
@@ -128,21 +156,30 @@ public class CtmBillerController : ControllerBase
         var requestBody = JsonSerializer.Serialize(request);
         var guid = request.MFEP?.MsgHeader?.GUID ?? "unknown";
         var ipAddress = HttpContext.GetClientIpAddress();
+        var userAgent = HttpContext.GetUserAgent();
+        var billingNo = request.MFEP?.MsgBody?.BillingInfo?.AcctInfo?.BillingNo;
+        var joebppsTrx = request.MFEP?.MsgBody?.BillingInfo?.JOEBPPSTrx;
 
         _logger.LogInformation("CTM PaymentAcknowledgment received. GUID: {GUID}, IP: {IP}", guid, ipAddress);
 
+        var apiLog = await _ctmLoggingService.LogRequestAsync("payment-acknowledgment", requestBody, ipAddress, userAgent);
+
         MfepPaymentAcknowledgmentResponse response;
         int errorCode = 0;
+        string? errorMessage = null;
 
         try
         {
             response = await _ctmService.HandlePaymentAcknowledgmentAsync(request);
             errorCode = response.MFEP.MsgHeader.Result?.ErrorCode ?? 0;
+            if (errorCode != 0)
+                errorMessage = response.MFEP.MsgHeader.Result?.ErrorDesc;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "CTM PaymentAcknowledgment error. GUID: {GUID}", guid);
             errorCode = 5;
+            errorMessage = ex.Message;
             response = BuildPaymentAcknowledgmentInternalErrorResponse(guid, request);
         }
 
@@ -162,6 +199,10 @@ public class CtmBillerController : ControllerBase
             Timestamp = DateTime.UtcNow,
             DurationMs = stopwatch.ElapsedMilliseconds
         });
+
+        await _ctmLoggingService.UpdateLogWithResponseAsync(
+            apiLog.Id, responseBody, errorCode == 0 ? 200 : 400, stopwatch.ElapsedMilliseconds,
+            billingNo: billingNo, joebppsTrx: joebppsTrx, errorMessage: errorMessage);
 
         return Ok(response);
     }

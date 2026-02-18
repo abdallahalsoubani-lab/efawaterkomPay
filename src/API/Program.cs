@@ -37,6 +37,31 @@ static async Task EnsureDonationReferencesTableAsync(ApplicationDbContext contex
     await context.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_DonationReferences_DonationId ON DonationReferences(DonationId)");
 }
 
+static async Task EnsureCtmApiLogsTableAsync(ApplicationDbContext context)
+{
+    if (!context.Database.IsSqlite()) return;
+    await context.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS CtmApiLogs (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+            Endpoint TEXT NOT NULL,
+            HttpMethod TEXT,
+            RequestBody TEXT,
+            ResponseBody TEXT,
+            HttpStatusCode INTEGER NOT NULL DEFAULT 0,
+            BillingNo TEXT,
+            JOEBPPSTrx TEXT,
+            ErrorMessage TEXT,
+            ClientIp TEXT,
+            UserAgent TEXT,
+            ResponseTimeMs INTEGER NOT NULL DEFAULT 0
+        )");
+    await context.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CtmApiLogs_Timestamp ON CtmApiLogs(Timestamp)");
+    await context.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CtmApiLogs_Endpoint ON CtmApiLogs(Endpoint)");
+    await context.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CtmApiLogs_JOEBPPSTrx ON CtmApiLogs(JOEBPPSTrx)");
+    await context.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CtmApiLogs_BillingNo ON CtmApiLogs(BillingNo)");
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -146,8 +171,9 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         await context.Database.EnsureCreatedAsync();
 
-        // Ensure DonationReferences table exists (for existing DBs created before this feature)
+        // Ensure tables exist (for existing DBs created before these features)
         await EnsureDonationReferencesTableAsync(context);
+        await EnsureCtmApiLogsTableAsync(context);
 
         // Seed roles
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();

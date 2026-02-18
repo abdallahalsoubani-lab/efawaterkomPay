@@ -171,6 +171,34 @@ function buildParams(filter: Record<string, any>): string {
   return params.toString();
 }
 
+export interface CtmApiLog {
+  id: number;
+  timestamp: string;
+  endpoint: string;
+  httpMethod: string;
+  requestBody?: string;
+  responseBody?: string;
+  httpStatusCode: number;
+  billingNo?: string;
+  joebppsTrx?: string;
+  errorMessage?: string;
+  clientIp?: string;
+  userAgent?: string;
+  responseTimeMs: number;
+}
+
+export interface CtmApiLogFilter {
+  page?: number;
+  pageSize?: number;
+  endpoint?: string;
+  fromDate?: string;
+  toDate?: string;
+  httpStatusCode?: number;
+  billingNo?: string;
+  joebppsTrx?: string;
+  sortDescending?: boolean;
+}
+
 export const campaignService = {
   async getCampaigns(filter: CampaignFilter = {}): Promise<PagedResult<Campaign>> {
     const response = await api.get<ApiResponse<PagedResult<Campaign>>>(
@@ -215,6 +243,13 @@ export const campaignService = {
   async getCtmLogs(filter: CtmLogFilter = {}): Promise<PagedResult<CtmAuditLog>> {
     const response = await api.get<ApiResponse<PagedResult<CtmAuditLog>>>(
       `/admin/ctm-logs?${buildParams(filter)}`
+    );
+    return response.data.data!;
+  },
+
+  async getCtmApiLogs(filter: CtmApiLogFilter = {}): Promise<PagedResult<CtmApiLog>> {
+    const response = await api.get<ApiResponse<PagedResult<CtmApiLog>>>(
+      `/admin/ctm-api-logs?${buildParams(filter)}`
     );
     return response.data.data!;
   },
