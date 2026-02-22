@@ -29,7 +29,7 @@
         "maxAmount": 100000.000
       },
       "bankAccount": {
-        "iban": "JO69JBA0720001921246410400034",
+        "iban": "JO36ARAB1280000000128279810500",
         "bankCode": "07"
       },
       "additionalInfo": {
@@ -62,7 +62,7 @@
         "maxAmount": 50000.000
       },
       "bankAccount": {
-        "iban": "JO69JBA0720001921246410400035",
+        "iban": "JO36ARAB1280000000128279810500",
         "bankCode": "07"
       },
       "additionalInfo": {
@@ -95,7 +95,7 @@
         "maxAmount": 200000.000
       },
       "bankAccount": {
-        "iban": "JO69JBA0720001921246410400036",
+        "iban": "JO36ARAB1280000000128279810500",
         "bankCode": "07"
       },
       "additionalInfo": {
@@ -128,7 +128,7 @@
         "maxAmount": 150000.000
       },
       "bankAccount": {
-        "iban": "JO69JBA0720001921246410400037",
+        "iban": "JO36ARAB1280000000128279810500",
         "bankCode": "07"
       },
       "additionalInfo": {
@@ -161,7 +161,7 @@
         "maxAmount": 75000.000
       },
       "bankAccount": {
-        "iban": "JO69JBA0720001921246410400038",
+        "iban": "JO36ARAB1280000000128279810500",
         "bankCode": "07"
       },
       "additionalInfo": {
